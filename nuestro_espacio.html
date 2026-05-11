@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuestro Espacio - App Privada</title>
+    <!-- Frameworks externos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fff5f7;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .photo-panel {
+            width: 40%;
+            height: 100%;
+            position: relative;
+            background-color: #fce7f3;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-display {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .photo-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 10px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            z-index: 10;
+        }
+
+        .heart-container {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            z-index: 20;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .heart-shape {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            width: 280px;
+            height: 250px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            clip-path: path('M140 230 C140 230 20 160 20 85 C20 40 60 20 95 20 C115 20 132 30 140 45 C148 30 165 20 185 20 C220 20 260 40 260 85 C260 160 140 230 140 230 Z');
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .heart-beat {
+            animation: beat 1.2s infinite;
+            display: inline-block;
+            margin: 0 8px;
+            color: #ec4899;
+        }
+
+        @keyframes beat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .content-panel {
+            width: 60%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffffff 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(251, 207, 232, 0.5);
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(236, 72, 153, 0.05);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .calendar-day:hover { background: #fdf2f8; }
+        .calendar-day.today { background: #ec4899; color: white; font-weight: bold; }
+        .calendar-day.other-month { color: #d1d5db; }
+        
+        .event-dot { width: 4px; height: 4px; background: #ec4899; border-radius: 50%; position: absolute; bottom: 4px; }
+        .today .event-dot { background: white; }
+
+        .btn-primary { 
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); 
+            color: white; 
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover { opacity: 0.9; transform: scale(1.02); }
+
+        .nav-pill {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #9d174d;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-pill.active {
+            background: #fdf2f8;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            color: #ec4899;
+        }
+
+        .gamer-rule-item {
+            border-left: 3px solid #6366f1;
+            padding-left: 1rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; overflow-y: auto; }
+            .photo-panel { width: 100%; height: 50vh; }
+            .content-panel { width: 100%; height: auto; padding: 1rem; }
+            .heart-container { top: 20px; left: 50%; transform: translateX(-50%); }
+            .heart-shape { width: 220px; height: 200px; }
+        }
+
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- SECCIÓN IZQUIERDA -->
+        <div class="photo-panel">
+            <img id="main-photo" src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1000&auto=format&fit=crop" alt="Nuestra Foto" class="photo-display">
+            
+            <div class="heart-container">
+                <div class="heart-shape">
+                    <h1 id="sidebar-names" class="text-2xl font-extrabold tracking-tight text-gray-900 leading-tight flex items-center justify-center">
+                        <span id="name-display-1">Juan</span>
+                        <i class="fas fa-heart heart-beat"></i>
+                        <span id="name-display-2">Rebeca</span>
+                    </h1>
+                    <p id="sidebar-ani" class="text-[10px] font-bold text-pink-600 mt-2 uppercase tracking-widest"></p>
+                </div>
+            </div>
+
+            <div class="photo-overlay">
+                <label for="upload-photo" class="cursor-pointer bg-white/90 p-2 rounded-full hover:bg-white transition flex items-center gap-2 px-4 shadow-sm">
+                    <i class="fas fa-camera text-pink-500"></i>
+                    <span class="text-xs font-bold text-gray-700">Cambiar Foto</span>
+                    <input type="file" id="upload-photo" class="hidden" accept="image/*" onchange="previewImage(event)">
+                </label>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DERECHA -->
+        <div class="content-panel">
+            <header class="mb-8 overflow-x-auto pb-2">
+                <div class="flex gap-2 bg-white p-2 rounded-3xl shadow-sm border border-pink-50 w-max">
+                    <button onclick="switchTab('calendar')" id="tab-calendar" class="nav-pill active"><i class="fas fa-calendar-alt mr-2"></i>Agenda</button>
+                    <button onclick="switchTab('rules')" id="tab-rules" class="nav-pill"><i class="fas fa-scroll mr-2"></i>Reglas</button>
+                    <button onclick="switchTab('movies')" id="tab-movies" class="nav-pill"><i class="fas fa-film mr-2"></i>Cine</button>
+                    <button onclick="switchTab('games')" id="tab-games" class="nav-pill"><i class="fas fa-gamepad mr-2"></i>Juegos</button>
+                    <button onclick="switchTab('shopping')" id="tab-shopping" class="nav-pill"><i class="fas fa-shopping-cart mr-2"></i>Compra</button>
+                    <button onclick="switchTab('config')" id="tab-config" class="nav-pill"><i class="fas fa-cog mr-2"></i>Ajustes</button>
+                </div>
+            </header>
+
+            <div class="max-w-2xl mx-auto">
+                <!-- CALENDARIO -->
+                <section id="calendar-section" class="animate-fade-in">
+                    <div class="mb-8">
+                        <div class="flex justify-between items-center mb-4 px-2">
+                            <h2 class="text-xl font-bold text-gray-800">Próximos Eventos ✨</h2>
+                            <button onclick="showEventModal()" class="text-pink-600 bg-pink-50 px-4 py-2 rounded-xl text-xs font-bold hover:bg-pink-100 transition">+ Añadir Plan</button>
+                        </div>
+                        <div id="upcoming-events-list" class="grid grid-cols-1 gap-3"></div>
+                    </div>
+
+                    <div class="glass-card p-8 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 id="current-month-display" class="text-xl font-bold text-gray-800 capitalize">Mes</h2>
+                            <div class="flex gap-2">
+                                <button onclick="changeMonth(-1)" class="w-8 h-8 bg-pink-50 text-pink-500 rounded-full hover:bg-pink-100 transition"><i class="fas fa-chevron-left text-xs"></i></button>
+                                <button onclick="changeMonth(1)" class="w-8 h-8 bg-pink-50 text-pink-500 rounded-full hover:bg-pink-100 transition"><i class="fas fa-chevron-right text-xs"></i></button>
+                            </div>
+                        </div>
+                        <div class="calendar-grid text-center text-[10px] font-bold text-gray-400 mb-4 uppercase">
+                            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+                        </div>
+                        <div id="calendar-days-grid" class="calendar-grid gap-1"></div>
+                    </div>
+                </section>
+
+                <!-- REGLAS GENERALES -->
+                <section id="rules-section" class="hidden animate-fade-in">
+                    <div class="glass-card p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">📜 Normas de la Casa</h2>
+                        
+                        <!-- SECCIÓN FIJA DE NORMAS (NO EDITABLE) -->
+                        <div class="fixed-rules-container mb-10">
+                            <ul class="space-y-4">
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-couch text-amber-600 mt-1"></i>
+                                    <span class="text-gray-700 font-medium">Rebeca tiene 2 noches de sofá al mes.</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-tv text-amber-600 mt-1"></i>
+                                    <span class="text-gray-700 font-medium">Se respeta la "TV" con partidos del Celta.</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-trash text-amber-600 mt-1"></i>
+                                    <span class="text-gray-700 font-medium">Juan saca la basura, Rebeca solo en casos puntuales en que Juan no esté en Madrid o esté a punto de desfallecer.</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-broom text-amber-600 mt-1"></i>
+                                    <span class="text-gray-700 font-medium">Limpieza de casa a favor de Rebeca, pero Juan debe hacer limpieza profunda 1 vez al mes.</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-heart text-amber-600 mt-1"></i>
+                                    <span class="text-gray-700 font-medium">Los actos sexuales se deben hacer 3 veces por semana a menos que alguno se encuentre indispuesto.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- SECCIÓN DINÁMICA DE REGLAS ADICIONALES -->
+                        <div class="border-t border-pink-100 pt-8 mt-4">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Otras Reglas & Acuerdos</h3>
+                            <div class="flex gap-2 mb-6">
+                                <input type="text" id="rules-input" placeholder="Añadir nueva regla..." class="flex-1 p-4 rounded-2xl border border-pink-100 bg-white/50 outline-none focus:ring-2 focus:ring-pink-200">
+                                <button onclick="addItem('rules')" class="btn-primary w-14 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <ul id="rules-list" class="space-y-3"></ul>
+                        </div>
+                </section>
+
+                <!-- SECCIÓN JUEGOS CON REGLAS EXTRAÍDAS -->
+                <section id="games-section" class="hidden animate-fade-in">
+                    <div class="glass-card p-8 mb-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">🎮 Nuestros Juegos</h2>
+                            <button onclick="toggleGamerRules()" class="bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-indigo-200 transition">
+                                <i class="fas fa-book mr-2"></i>Ver Reglas Gamer
+                            </button>
+                        </div>
+
+                        <!-- Panel de Reglas Gamer (Colapsable) -->
+                        <div id="gamer-rules-panel" class="hidden mb-8 p-6 bg-indigo-50/50 rounded-3xl border border-indigo-100 animate-fade-in">
+                            <div class="flex gap-4 mb-4 border-b border-indigo-100 pb-2">
+                                <button onclick="switchGamerRulesTab('individual')" id="rule-tab-individual" class="text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 pb-1">INDIVIDUALES</button>
+                                <button onclick="switchGamerRulesTab('couple')" id="rule-tab-couple" class="text-xs font-bold text-gray-400 pb-1">EN PAREJA</button>
+                            </div>
+                            
+                            <div id="gamer-rules-content" class="max-h-60 overflow-y-auto pr-2">
+                                <!-- Contenido dinámico -->
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 bg-indigo-50 p-6 rounded-[30px] mb-8">
+                            <input type="text" id="game-input" placeholder="Nombre del juego..." class="w-full p-4 rounded-2xl outline-none border-none">
+                            <div class="grid grid-cols-2 gap-4">
+                                <select id="game-player" class="p-4 rounded-2xl bg-white outline-none border-none text-sm font-semibold">
+                                    <option value="Juan">Juan</option>
+                                    <option value="Rebeca">Rebeca</option>
+                                    <option value="Ambos">Ambos</option>
+                                </select>
+                                <select id="game-console" class="p-4 rounded-2xl bg-white outline-none border-none text-sm font-semibold">
+                                    <option value="PS5">PS5</option>
+                                    <option value="Switch">Switch</option>
+                                    <option value="PC">PC</option>
+                                    <option value="Xbox">Xbox</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-indigo-400 uppercase ml-2">Inicio</label>
+                                    <input type="date" id="game-start-date" class="w-full p-4 rounded-2xl outline-none border-none text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-indigo-400 uppercase ml-2">Fin</label>
+                                    <input type="date" id="game-end-date" class="w-full p-4 rounded-2xl outline-none border-none text-sm">
+                                </div>
+                            </div>
+                            <button onclick="addGame()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg">Registrar</button>
+                        </div>
+                        <div id="games-container" class="space-y-4"></div>
+                    </div>
+                </section>
+
+                <!-- CINE, COMPRA, AJUSTES (Mantenidos igual) -->
+                <section id="movies-section" class="hidden animate-fade-in">
+                    <div class="glass-card p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">🎬 Cine & Series</h2>
+                        <div class="space-y-4 bg-purple-50 p-6 rounded-[30px] mb-6">
+                            <input type="text" id="movie-input" placeholder="Nombre de la obra..." class="w-full p-4 rounded-2xl border-none outline-none">
+                            <div class="grid grid-cols-2 gap-4">
+                                <select id="movie-type" class="p-4 rounded-2xl bg-white border-none outline-none text-sm font-semibold">
+                                    <option value="Película">Película</option>
+                                    <option value="Serie">Serie</option>
+                                    <option value="Anime">Anime</option>
+                                    <option value="Dorama">Dorama</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                                <select id="movie-platform" class="p-4 rounded-2xl bg-white border-none outline-none text-sm font-semibold">
+                                    <option value="Netflix">Netflix</option>
+                                    <option value="Disney+">Disney+</option>
+                                    <option value="Prime Video">Prime Video</option>
+                                    <option value="Crunchyroll">Crunchyroll</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-purple-400 uppercase ml-2">Inicio</label>
+                                    <input type="date" id="movie-start-date" class="w-full p-4 rounded-2xl outline-none border-none text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-purple-400 uppercase ml-2">Fin</label>
+                                    <input type="date" id="movie-end-date" class="w-full p-4 rounded-2xl outline-none border-none text-sm">
+                                </div>
+                            </div>
+                            <button onclick="addMovie()" class="w-full bg-purple-600 text-white py-4 rounded-2xl font-bold shadow-lg">Guardar en Lista</button>
+                        </div>
+                        <div id="movies-container" class="space-y-4"></div>
+                    </div>
+                </section>
+
+                <section id="shopping-section" class="hidden animate-fade-in">
+                    <div class="glass-card p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">🛒 Lista de la Compra</h2>
+                        <div class="flex gap-2 mb-8">
+                            <input type="text" id="shopping-input" placeholder="Añadir artículo..." class="flex-1 p-4 rounded-2xl border border-pink-100 bg-white/50 outline-none">
+                            <button onclick="addItem('shopping')" class="btn-primary w-14 rounded-2xl flex items-center justify-center shadow-lg"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <ul id="shopping-list" class="space-y-3 mb-6"></ul>
+                        <button onclick="sendToWhatsapp()" id="btn-whatsapp" class="hidden w-full bg-[#25D366] text-white py-5 rounded-3xl font-bold flex items-center justify-center gap-3">
+                            <i class="fab fa-whatsapp"></i> Enviar por WhatsApp
+                        </button>
+                    </div>
+                </section>
+
+                <section id="config-section" class="hidden animate-fade-in">
+                    <div class="glass-card p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Ajustes</h2>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="text" id="name1" placeholder="Nombre 1" class="p-4 rounded-2xl border border-pink-100 outline-none">
+                                <input type="text" id="name2" placeholder="Nombre 2" class="p-4 rounded-2xl border border-pink-100 outline-none">
+                            </div>
+                            <input type="date" id="anniversary-date" class="w-full p-4 rounded-2xl border border-pink-100 outline-none">
+                            <button onclick="saveProfile()" class="w-full btn-primary py-4 rounded-2xl font-bold shadow-xl">Guardar</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EVENTO -->
+    <div id="event-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-[40px] p-8 w-full max-w-sm animate-fade-in">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Nuevo Plan 📅</h3>
+            <label class="text-[10px] font-bold text-pink-400 uppercase ml-2 mb-1 block">¿Qué haremos?</label>
+            <input type="text" id="event-title" placeholder="Cena, Cine..." class="w-full p-4 border border-pink-50 rounded-2xl mb-4 outline-none">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div><label class="text-[10px] font-bold text-pink-400 uppercase ml-2 block">Fecha</label>
+                <input type="date" id="event-date" class="w-full p-4 border border-pink-50 rounded-2xl outline-none text-sm"></div>
+                <div><label class="text-[10px] font-bold text-pink-400 uppercase ml-2 block">Hora</label>
+                <input type="time" id="event-time" class="w-full p-4 border border-pink-50 rounded-2xl outline-none text-sm"></div>
+            </div>
+            <label class="text-[10px] font-bold text-pink-400 uppercase ml-2 block">¿Dónde?</label>
+            <input type="text" id="event-location" placeholder="Ubicación" class="w-full p-4 border border-pink-50 rounded-2xl mb-6 outline-none">
+            <div class="flex gap-4">
+                <button onclick="closeEventModal()" class="flex-1 py-4 bg-gray-50 text-gray-400 font-bold rounded-2xl">Cancelar</button>
+                <button onclick="addPlan()" class="flex-1 btn-primary py-4 rounded-2xl font-bold">Añadir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-10 right-10 bg-gray-900 text-white px-8 py-4 rounded-2xl opacity-0 transition-all pointer-events-none text-sm font-bold z-50"></div>
+
+    <script>
+        // Datos de las reglas Gamer extraídas de las fotos
+        const gamerRules = {
+            individual: [
+                "El máximo de juegos pendientes es de 3.",
+                "No cuentan como juegos nuevos los DLC ni los juegos ya jugados.",
+                "Los juegos pueden comprarse, pero no iniciarse si ya hay 3 juegos pendientes en la lista.",
+                "Una vez iniciado, cada juego tiene un plazo máximo de 90 días para ser terminado.",
+                "Se puede llamar 'Manco' a un jugador si pierde más de 5 veces seguidas.",
+                "No se añaden a la lista los juegos online.",
+                "No se añaden juegos cortos (menos de 10 horas) ni juegos de cartas.",
+                "No se pueden añadir o iniciar juegos que sean secuelas si no se han jugado los anteriores (ej. The Witcher 4). *No cuentan precuelas ni spin-offs.",
+                "PLUS: Progreso mínimo: definir cuántas horas o % debe avanzar un jugador para que cuente como 'iniciado'.",
+                "PLUS: Penalización por no acabar: si no se termina en 90 días, ¿qué pasa? (Ej. no comprar otro durante un mes).",
+                "PLUS: Sistema de puntos/ranking: ganar puntos por terminar y perder por incumplir plazos.",
+                "PLUS: Excepciones: añadir juego corto si es parte de un reto grupal (<40h).",
+                "Revisión mensual: al final de cada mes se revisa quién cumplió las reglas."
+            ],
+            couple: [
+                "El máximo de juegos pendientes es de 7.",
+                "No cuentan como juegos nuevos los DLC ni los juegos ya jugados.",
+                "Los juegos pueden comprarse, pero no iniciarse si ya hay 7 juegos pendientes.",
+                "Una vez iniciado, cada juego tiene un plazo máximo de 120 días para ser terminado.",
+                "Se puede llamar 'Manco' a un jugador si pierde más de 5 veces seguidas.",
+                "Un juego puede pasar de lista individual a pareja si ambas partes están de acuerdo.",
+                "No se pueden usar guías ni ver gameplays para superar capítulos.",
+                "Los juegos de shooter y carreras sí cuentan para ser añadidos.",
+                "Regla de consenso: solo se inicia si ambos están de acuerdo.",
+                "PLUS: Reto cooperativo: intentar siempre campaña cooperativa antes que solitario.",
+                "PLUS: Turnos de elección: cada nuevo juego lo elige uno de los dos alternando.",
+                "PLUS: Penalización divertida: si uno incumple una regla, debe cumplir un reto (ej. preparar snacks).",
+                "PLUS: Tiempo mínimo conjunto: definir horas mínimas a la semana para no estancarse.",
+                "PLUS: Premio por completar: celebración especial al terminar (cena, peli, etc.)."
+            ]
+        };
+
+        let appData = {
+            profile: { name1: 'Juan', name2: 'Rebeca', anniversary: '' },
+            rules: ["Respeto", "Cariño", "Citas sorpresa"],
+            shopping: [],
+            events: [],
+            movies: [],
+            games: [],
+            photo: null
+        };
+
+        let currentCalendarDate = new Date();
+
+        window.onload = () => {
+            const saved = localStorage.getItem('NuestroEspacioApp');
+            if (saved) appData = JSON.parse(saved);
+            if (appData.photo) document.getElementById('main-photo').src = appData.photo;
+            updateUI();
+            renderCalendar();
+            switchGamerRulesTab('individual');
+        };
+
+        function saveData() { localStorage.setItem('NuestroEspacioApp', JSON.stringify(appData)); }
+
+        function previewImage(e) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                document.getElementById('main-photo').src = reader.result;
+                appData.photo = reader.result;
+                saveData();
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function switchTab(tab) {
+            ['calendar', 'rules', 'movies', 'games', 'shopping', 'config'].forEach(s => {
+                document.getElementById(`${s}-section`).classList.add('hidden');
+                document.getElementById(`tab-${s}`).classList.remove('active');
+            });
+            document.getElementById(`${tab}-section`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            if(tab === 'calendar') renderCalendar();
+        }
+
+        // Funciones de Reglas Gamer
+        function toggleGamerRules() {
+            const panel = document.getElementById('gamer-rules-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function switchGamerRulesTab(type) {
+            const content = document.getElementById('gamer-rules-content');
+            const tabInd = document.getElementById('rule-tab-individual');
+            const tabCoup = document.getElementById('rule-tab-couple');
+            
+            if(type === 'individual') {
+                tabInd.classList.add('text-indigo-600', 'border-indigo-600');
+                tabInd.classList.remove('text-gray-400');
+                tabCoup.classList.add('text-gray-400');
+                tabCoup.classList.remove('text-indigo-600', 'border-indigo-600');
+            } else {
+                tabCoup.classList.add('text-indigo-600', 'border-indigo-600');
+                tabCoup.classList.remove('text-gray-400');
+                tabInd.classList.add('text-gray-400');
+                tabInd.classList.remove('text-indigo-600', 'border-indigo-600');
+            }
+
+            content.innerHTML = gamerRules[type].map(rule => `
+                <div class="gamer-rule-item">
+                    ${rule.includes('PLUS') ? '<span class="text-[9px] font-bold text-indigo-400 block mb-1">MODO PLUS</span>' : ''}
+                    ${rule.replace('PLUS:', '')}
+                </div>
+            `).join('');
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-days-grid');
+            const display = document.getElementById('current-month-display');
+            const month = currentCalendarDate.getMonth();
+            const year = currentCalendarDate.getFullYear();
+            display.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
+            const firstDay = (new Date(year, month, 1).getDay() + 6) % 7;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevDays = new Date(year, month, 0).getDate();
+            grid.innerHTML = '';
+            for (let i = firstDay - 1; i >= 0; i--) grid.innerHTML += `<div class="calendar-day other-month">${prevDays - i}</div>`;
+            const today = new Date();
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const hasEvent = appData.events.some(e => e.date === dateStr);
+                const isToday = today.getDate() === d && today.getMonth() === month && today.getFullYear() === year;
+                grid.innerHTML += `<div class="calendar-day ${isToday ? 'today' : ''}" onclick="selectDate('${dateStr}')">${d}${hasEvent ? '<div class="event-dot"></div>' : ''}</div>`;
+            }
+            updateUpcomingEvents();
+        }
+
+        function updateUpcomingEvents() {
+            const list = document.getElementById('upcoming-events-list');
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const upcoming = appData.events.filter(e => new Date(e.date) >= today).sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            list.innerHTML = upcoming.map(e => `
+                <div class="glass-card p-5 flex items-start justify-between border-l-4 border-l-pink-500 animate-fade-in relative">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                             <span class="font-bold text-gray-800 text-base">${e.title}</span>
+                             ${e.time ? `<span class="bg-pink-100 text-pink-600 px-2 py-0.5 rounded-lg text-[10px] font-bold"><i class="far fa-clock mr-1"></i>${e.time}</span>` : ''}
+                        </div>
+                        ${e.location ? `<div class="text-gray-500 text-xs flex items-center gap-1"><i class="fas fa-map-marker-alt text-pink-300"></i> ${e.location}</div>` : ''}
+                        <div class="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wider">${new Date(e.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    </div>
+                    <button onclick="deleteEvent('${e.id}')" class="text-gray-300 hover:text-red-400 transition ml-2"><i class="fas fa-trash-alt text-sm"></i></button>
+                </div>`).join('') || '<p class="text-gray-400 text-xs italic p-4 text-center">No hay planes próximos... ¡toca planear algo!</p>';
+        }
+
+        function deleteEvent(id) { appData.events = appData.events.filter(e => e.id !== id); saveData(); renderCalendar(); showToast('Evento eliminado'); }
+        function changeMonth(d) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + d); renderCalendar(); }
+        function selectDate(d) { document.getElementById('event-date').value = d; showEventModal(); }
+        function showEventModal() { document.getElementById('event-modal').classList.remove('hidden'); }
+        function closeEventModal() { document.getElementById('event-modal').classList.add('hidden'); }
+        
+        function addPlan() {
+            const title = document.getElementById('event-title').value;
+            const date = document.getElementById('event-date').value;
+            const time = document.getElementById('event-time').value;
+            const location = document.getElementById('event-location').value;
+            if(!title || !date) return;
+            appData.events.push({ id: Date.now().toString(), title, date, time, location });
+            saveData(); renderCalendar(); closeEventModal();
+            document.getElementById('event-title').value = '';
+            document.getElementById('event-time').value = '';
+            document.getElementById('event-location').value = '';
+            showToast('¡Plan agendado!');
+        }
+
+        function calculateTimeProgress(startDate) {
+            const start = new Date(startDate);
+            const now = new Date();
+            const diffTime = Math.abs(now - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 30) return `${diffDays} d`;
+            const months = Math.floor(diffDays / 30);
+            return `${months}m`;
+        }
+
+        function updateUI() {
+            document.getElementById('name-display-1').textContent = appData.profile.name1;
+            document.getElementById('name-display-2').textContent = appData.profile.name2;
+            if(appData.profile.anniversary) document.getElementById('sidebar-ani').textContent = `Juntos desde ${new Date(appData.profile.anniversary).toLocaleDateString()}`;
+            
+            document.getElementById('rules-list').innerHTML = appData.rules.map((r, i) => `
+                <li class="p-4 bg-white rounded-2xl flex justify-between shadow-sm"><span>#${i+1} ${r}</span><button onclick="deleteItem('rules', ${i})" class="text-gray-300">×</button></li>`).join('');
+
+            document.getElementById('shopping-list').innerHTML = appData.shopping.map((s, i) => `
+                <li class="p-4 bg-white rounded-2xl flex justify-between shadow-sm"><span>${s}</span><button onclick="deleteItem('shopping', ${i})" class="text-red-300">×</button></li>`).join('');
+            
+            document.getElementById('movies-container').innerHTML = appData.movies.map(m => {
+                let status = m.end ? `<span class="text-green-500">Fin: ${new Date(m.end).toLocaleDateString()}</span>` : (m.start ? `<span class="text-orange-500 italic">En progreso (${calculateTimeProgress(m.start)})</span>` : "Pendiente");
+                return `<div class="p-5 bg-white rounded-3xl flex justify-between items-start shadow-sm border border-purple-50"><div class="flex-1"><div class="flex gap-2 items-center mb-1"><span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 uppercase">${m.type}</span></div><div class="font-bold text-gray-800 text-lg">${m.title}</div><div class="text-[10px] mt-1 font-medium">${status}</div></div><button onclick="deleteMovie('${m.id}')" class="text-gray-300 hover:text-red-400 ml-4"><i class="fas fa-trash-alt"></i></button></div>`;
+            }).join('');
+
+            document.getElementById('games-container').innerHTML = appData.games.map(g => {
+                let status = g.end ? `Terminado` : `En progreso (${calculateTimeProgress(g.start)})`;
+                return `<div class="p-5 bg-white rounded-3xl shadow-sm flex justify-between border border-indigo-50"><div><span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${g.player === 'Juan' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'}">${g.player}</span><h4 class="font-bold text-gray-800 text-lg mt-1">${g.name}</h4><p class="text-[10px] text-gray-500 font-medium">${status} • ${g.console}</p></div><button onclick="deleteGame('${g.id}')" class="text-gray-300 hover:text-red-400">×</button></div>`;
+            }).join('');
+
+            document.getElementById('name1').value = appData.profile.name1;
+            document.getElementById('name2').value = appData.profile.name2;
+            document.getElementById('anniversary-date').value = appData.profile.anniversary;
+        }
+
+        function addGame() {
+            const name = document.getElementById('game-input').value;
+            const start = document.getElementById('game-start-date').value;
+            if(!name || !start) return;
+            appData.games.push({ id: Date.now().toString(), name, player: document.getElementById('game-player').value, console: document.getElementById('game-console').value, start, end: document.getElementById('game-end-date').value });
+            saveData(); updateUI(); document.getElementById('game-input').value = '';
+        }
+
+        function deleteGame(id) { appData.games = appData.games.filter(g => g.id !== id); saveData(); updateUI(); }
+        function addItem(t) { const i = document.getElementById(`${t}-input`); if(!i.value) return; appData[t].push(i.value); i.value = ''; saveData(); updateUI(); }
+        function deleteItem(t, idx) { appData[t].splice(idx,1); saveData(); updateUI(); }
+        function addMovie() { 
+            const i = document.getElementById('movie-input'); 
+            if(!i.value) return; 
+            appData.movies.push({ id: Date.now().toString(), title: i.value, type: document.getElementById('movie-type').value, platform: document.getElementById('movie-platform').value, start: document.getElementById('movie-start-date').value, end: document.getElementById('movie-end-date').value }); 
+            i.value=''; saveData(); updateUI(); 
+        }
+        function deleteMovie(id) { appData.movies = appData.movies.filter(m => m.id !== id); saveData(); updateUI(); }
+        function saveProfile() { appData.profile.name1 = document.getElementById('name1').value; appData.profile.name2 = document.getElementById('name2').value; appData.profile.anniversary = document.getElementById('anniversary-date').value; saveData(); updateUI(); showToast('Guardado'); }
+        function sendToWhatsapp() { window.open(`https://wa.me/?text=${encodeURIComponent('🛒 Lista:\n' + appData.shopping.join('\n'))}`, '_blank'); }
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 2000); }
+    </script>
+</body>
+</html>
